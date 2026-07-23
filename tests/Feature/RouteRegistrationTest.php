@@ -17,6 +17,12 @@ it('registers the main route with the configured middleware', function () {
         ->and($route->gatherMiddleware())->toContain(StartSession::class);
 });
 
+it('does not throttle the main route when rate limiting is disabled by default', function () {
+    $route = Route::getRoutes()->getByName('adminer-bridge.index');
+
+    expect(array_filter($route->gatherMiddleware(), fn ($m) => str_starts_with($m, 'throttle:')))->toBe([]);
+});
+
 it('registers static, jush, and design asset routes under the configured prefix', function () {
     expect(Route::getRoutes()->getByName('adminer-bridge.static'))->not->toBeNull()
         ->and(Route::getRoutes()->getByName('adminer-bridge.jush'))->not->toBeNull()

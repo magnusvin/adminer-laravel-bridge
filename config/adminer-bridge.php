@@ -21,6 +21,15 @@ return [
     // null disables the gate (only route.middleware protects the route).
     'guard' => null,
 
+    // Throttles the Adminer route using Laravel's own rate limiter (the same
+    // mechanism as the framework's `throttle` middleware) - keyed by the
+    // authenticated user if any, otherwise by IP address. Disabled by default.
+    'rate_limit' => [
+        'enabled' => false,
+        'max_attempts' => 60,
+        'decay_minutes' => 1,
+    ],
+
     // null defers to the app's own config('session.driver'); or force a specific
     // Laravel session driver (file, database, redis, ...) just for Adminer.
     'session_driver' => 'file',

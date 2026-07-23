@@ -17,6 +17,11 @@ it('has the expected default config shape', function () {
             ],
         ],
         'guard' => null,
+        'rate_limit' => [
+            'enabled' => false,
+            'max_attempts' => 60,
+            'decay_minutes' => 1,
+        ],
         'session_driver' => 'file',
         'permanent_login' => true,
         'production_warning' => [

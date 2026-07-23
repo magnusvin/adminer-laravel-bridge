@@ -18,6 +18,12 @@ if ($guard) {
     $middleware[] = 'auth:'.$guard;
 }
 
+$rateLimit = (array) config('adminer-bridge.rate_limit', []);
+
+if ($rateLimit['enabled'] ?? false) {
+    $middleware[] = 'throttle:'.($rateLimit['max_attempts'] ?? 60).','.($rateLimit['decay_minutes'] ?? 1);
+}
+
 /**
  * Adminer's own markup hardcodes "../adminer/static/…" relative to whatever
  * directory it's served from, so that route must be anchored one level above
