@@ -19,7 +19,9 @@
     ],
     "require": {
         "php": "^8.3",
-        "illuminate/support": "^12.0||^13.0"
+        "illuminate/support": "^12.0||^13.0",
+        "vrana/adminer": "^5.5",
+        "vrana/jush": "^3.0"
     },
     "require-dev": {
         "larastan/larastan": "^3.9",
@@ -46,12 +48,8 @@
             "@clear",
             "@prepare"
         ],
-        "prepare": [
-            "@php vendor/bin/testbench package:discover --ansi"
-        ],
-        "build": [
-            "@php vendor/bin/testbench workbench:build --ansi"
-        ],
+        "prepare": "@php vendor/bin/testbench package:discover --ansi",
+        "build": "@php vendor/bin/testbench workbench:build --ansi",
         "serve": [
             "Composer\\Config::disableProcessTimeout",
             "@build",
@@ -64,7 +62,7 @@
             "vendor/bin/pint --parallel --test"
         ],
         "analyse": [
-            "vendor/bin/phpstan analyse"
+            "vendor/bin/phpstan analyse --memory-limit=1G"
         ],
         "test:types": [
             "vendor/bin/pest --type-coverage --min=100"
@@ -78,9 +76,7 @@
             "@test:types",
             "@test:unit"
         ],
-        "clear": [
-            "@php vendor/bin/testbench package:purge-skeleton --ansi"
-        ]
+        "clear": "@php vendor/bin/testbench package:purge-skeleton --ansi"
     },
     "extra": {
         "laravel": {
