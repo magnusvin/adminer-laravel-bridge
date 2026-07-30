@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace AdminerBridge\AdminerBridge\Http\Controllers;
 
 use AdminerBridge\AdminerBridge\AdminerBridge;
+use AdminerBridge\AdminerBridge\Http\AlreadySentResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -18,7 +19,7 @@ class AdminerController
      * target, so the trailing slash has to be restored by hand and the
      * response built directly instead of via the `redirect()` helper.
      */
-    public function __invoke(Request $request, AdminerBridge $bridge): ?RedirectResponse
+    public function __invoke(Request $request, AdminerBridge $bridge): RedirectResponse|AlreadySentResponse
     {
         if ($request->route('any') === null && ! str_ends_with($request->getPathInfo(), '/')) {
             $query = $request->getQueryString();
@@ -28,6 +29,6 @@ class AdminerController
 
         $bridge->serve();
 
-        return null;
+        return new AlreadySentResponse;
     }
 }
