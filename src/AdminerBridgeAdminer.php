@@ -43,11 +43,6 @@ class AdminerBridgeAdminer extends Adminer
      * known literal path in their output to point at our own route, fully
      * nested under the configured prefix - or drop the links entirely when
      * jush is disabled.
-     *
-     * The version-check script is neutralized the same way Adminer's own
-     * bundled version-noverify.php plugin does it: redefine the client-side
-     * verifyVersion() function to a no-op instead of trying to intercept the
-     * hardcoded onload call in design.inc.php.
      */
     public function head(?bool $dark = null): bool
     {
@@ -59,15 +54,21 @@ class AdminerBridgeAdminer extends Adminer
             $linkFavicon = true;
         }
 
-        if (! $this->versionCheckEnabled) {
-            echo script('verifyVersion = () => { };');
-        }
-
         if ($this->productionWarningText !== null && $this->productionWarningText !== '') {
             echo script($this->productionWarningScript());
         }
 
         return $linkFavicon;
+    }
+
+    /**
+     * Gates both the client-side version-check request and its no-JS
+     * <noscript> iframe fallback in design.inc.php - the same hook Adminer's
+     * own bundled version-noverify.php plugin overrides to disable the check.
+     */
+    public function verifyVersion(): bool
+    {
+        return $this->versionCheckEnabled;
     }
 
     /**

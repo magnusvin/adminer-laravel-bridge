@@ -48,18 +48,20 @@ it('omits jush links entirely when jush is disabled', function () {
     expect($html)->not->toContain('jush');
 });
 
-it('neutralizes the version check script when disabled', function () {
+it('disables the version check when configured', function () {
     $adminer = makeAdminerBridgeAdminer(versionCheckEnabled: false);
 
-    ob_start();
-    $adminer->head(null);
-    $html = ob_get_clean();
-
-    expect($html)->toContain('verifyVersion = () => { };');
+    expect($adminer->verifyVersion())->toBeFalse();
 });
 
-it('does not touch the version check when enabled', function () {
+it('leaves the version check enabled by default', function () {
     $adminer = makeAdminerBridgeAdminer(versionCheckEnabled: true);
+
+    expect($adminer->verifyVersion())->toBeTrue();
+});
+
+it('no longer touches head() output for the version check', function () {
+    $adminer = makeAdminerBridgeAdminer(versionCheckEnabled: false);
 
     ob_start();
     $adminer->head(null);

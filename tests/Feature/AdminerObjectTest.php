@@ -58,6 +58,18 @@ it('does not show the production warning when the environment does not match', f
     expect($html)->not->toContain('banner');
 });
 
+it('wires the version_check config through to verifyVersion()', function () {
+    require_once __DIR__.'/../../vendor/vrana/adminer/adminer/include/adminer.inc.php';
+    require_once __DIR__.'/../../vendor/vrana/adminer/adminer/include/html.inc.php';
+    require_once __DIR__.'/../../vendor/vrana/adminer/adminer/include/functions.inc.php';
+    require_once __DIR__.'/../../vendor/vrana/adminer/adminer/include/design.inc.php';
+    require_once __DIR__.'/../../src/adminer-object.php';
+
+    config(['adminer-bridge.version_check' => false]);
+
+    expect(adminer_object()->verifyVersion())->toBeFalse();
+});
+
 it('lets an explicit enabled flag override the app environment', function () {
     require_once __DIR__.'/../../vendor/vrana/adminer/adminer/include/adminer.inc.php';
     require_once __DIR__.'/../../vendor/vrana/adminer/adminer/include/html.inc.php';
