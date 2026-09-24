@@ -1,8 +1,29 @@
 # Release Notes
 
-## [Unreleased](https://github.com/magnusvin/adminer-laravel-bridge/commits/main/compare/6.0.0.1...HEAD)
+## [Unreleased](https://github.com/magnusvin/adminer-laravel-bridge/commits/main/compare/6.0.1.0...HEAD)
 
 No unreleased changes yet. See [Versioning](README.md#versioning) for how release version numbers are chosen.
+
+## [6.0.1.0](https://github.com/magnusvin/adminer-laravel-bridge/commits/main/compare/6.0.0.1...6.0.1.0) - 2026-09-24
+
+Ships **Adminer 6.0.1** ([upstream changelog](https://github.com/vrana/adminer/blob/v6.0.1/CHANGELOG.md)).
+
+### Adminer 6.0.1
+
+Security and session handling: the CSRF token is now verified when logging in and before killing a client-side timed-out query, the session cookie is sent with `SameSite=lax`, and an invalid CSRF token or oversized POST returns an error status instead of a normal page. Elasticsearch and MS SQL got substantial driver work, OpenSearch is supported, the database schema page arranges tables by their foreign keys, and Select can modify or delete several rows in a transaction.
+
+### Changed in the bridge
+
+Adminer 6.0.1 made its development version runnable from the `adminer/` directory under any name, which changed every hardcoded asset link from `../adminer/static/…` to `./static/…`, and moved jush out of `externals/` into `adminer/static/jush`. Both needed handling here:
+
+- **The static asset route moved under the configured prefix.** It used to be anchored one level above it to match Adminer's `../adminer/static/…` links. For the default `adminer` prefix the resulting URL is unchanged. If you run Adminer under a nested prefix such as `tools/db`, assets now resolve correctly instead of pointing at a sibling directory.
+- **jush is served through that same route.** The dedicated `adminer-bridge.jush` route is gone, along with the output rewriting in `head()` and `syntaxHighlighting()` that used to redirect Adminer's `../externals/jush/…` links. If you referenced `route('adminer-bridge.jush', …)` directly, use `route('adminer-bridge.static', ['file' => 'jush/…'])` instead.
+
+Note that `adminer/static/jush` is a Git submodule in Adminer's tree, so the Composer package ships it empty — requests under that prefix are resolved against the separate `vrana/jush` package. That indirection is why this needed bridge work rather than just a version bump.
+
+Verified against a running workbench: `default.css`, `dark.css`, `functions.js`, `editing.js`, `logo.png` and the jush CSS and modules all serve with the expected content types.
+
+**Full Changelog**: https://github.com/magnusvin/adminer-laravel-bridge/compare/6.0.0.1...6.0.1.0
 
 ## [6.0.0.1](https://github.com/magnusvin/adminer-laravel-bridge/commits/main/compare/6.0.0.0...6.0.0.1) - 2026-09-24
 
