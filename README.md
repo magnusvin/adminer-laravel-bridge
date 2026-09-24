@@ -16,7 +16,7 @@ A Laravel bridge for [Adminer](https://www.adminer.org/), the single-file databa
 
 - PHP 8.3+
 - Laravel 12.x or 13.x
-- [`vrana/adminer`](https://packagist.org/packages/vrana/adminer) ^6.0 (installed automatically as a dependency)
+- [`vrana/adminer`](https://packagist.org/packages/vrana/adminer) 6.0.0 (installed automatically as a dependency, pinned to an exact version — see [Versioning](#versioning))
 
 ## Installation
 
@@ -101,17 +101,19 @@ By default the Adminer UI is available at `/adminer`. Since Adminer handles its 
 
 ## Versioning
 
-This package tracks [Adminer](https://www.adminer.org/)'s own release cycle instead of an independent semver line. A version has four segments: the first three mirror the `vrana/adminer` release the package was built against, and the fourth is this package's own patch counter for fixes made without an upstream Adminer bump.
+This package tracks [Adminer](https://www.adminer.org/)'s own release cycle instead of an independent semver line. A version has four segments: the first three are the exact `vrana/adminer` release the package ships, and the fourth is this package's own patch counter for fixes made without an upstream Adminer bump.
 
-- A bridge-only fix (no Adminer version change) bumps the last segment, e.g. `5.5.1.0` → `5.5.1.1`.
-- A new Adminer release resets the last segment to `0` and adopts Adminer's new version, e.g. `5.5.1.4` → `5.6.0.0`.
+- A bridge-only fix (no Adminer version change) bumps the last segment, e.g. `6.0.0.0` → `6.0.0.1`.
+- A new Adminer release resets the last segment to `0` and adopts Adminer's new version, e.g. `6.0.0.4` → `6.1.0.0`.
 
-Composer accepts this four-segment format natively, but keep in mind it does **not** carry the usual semver guarantee that the first number only changes on a breaking change *to this package's own API* — it changes whenever upstream Adminer does. Pin a full version (or a `~5.5.1` style constraint) rather than a broad `^5` if you want to control upgrades explicitly, and check the [CHANGELOG](CHANGELOG.md) before bumping across an Adminer version boundary.
+To make that mapping a guarantee rather than a convention, `vrana/adminer` is required at an **exact version** (`6.0.0`, not `^6.0`), and `vrana/jush` is constrained to patch releases only (`~3.1.0`). Installing `magnusvin/adminer-laravel-bridge:6.0.0.*` therefore always gives you Adminer 6.0.0 — never a minor or patch bump that arrived upstream after this bridge release was tested. An upstream Adminer release reaches you through a matching bridge release, not silently through a `composer update`.
+
+Composer accepts the four-segment format natively, but keep in mind it does **not** carry the usual semver guarantee that the first number only changes on a breaking change *to this package's own API* — it changes whenever upstream Adminer does. A `^6.0.0.0` constraint on this package still spans every Adminer 6.x release, so pin a full version (or a `~6.0.0.0` style constraint, which stays on Adminer 6.0.0) if you want to control Adminer upgrades explicitly, and check the [CHANGELOG](CHANGELOG.md) before bumping across an Adminer version boundary.
 
 ## Roadmap
 
-- Dependabot is already configured for GitHub Actions and Composer dependencies (weekly); once tagged releases exist, it can also be pointed at `vrana/adminer` version bumps to prompt a matching bridge release.
-- Future releases are intended to follow shortly after each upstream Adminer tag, keeping the first three version segments in sync with `vrana/adminer`.
+- Dependabot is configured for GitHub Actions and Composer dependencies (weekly). Because `vrana/adminer` is pinned exactly, an upstream Adminer release can no longer reach users through a `composer update` on their side — it has to come through a bridge release that moves the pin, which is what keeps the version numbers honest.
+- Future releases are intended to follow shortly after each upstream Adminer tag, keeping the first three version segments in lockstep with the pinned `vrana/adminer` version.
 - Contributions and issue reports that help track Adminer's release cadence are welcome — see [Contributing](#contributing) below.
 
 ## Changelog
