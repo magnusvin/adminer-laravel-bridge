@@ -277,8 +277,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          title="Adminer ${{ steps.detect.outputs.latest }} needs bridge work"
+
+          # This workflow runs daily. Without this check a version that stays
+          # broken would file the same issue every morning.
+          if [ -n "$(gh issue list --state open --search "\"${title}\" in:title" --json number --jq '.[0].number')" ]; then
+            echo "An open issue for this version already exists; not filing another."
+            exit 0
+          fi
+
           gh issue create \
-            --title "Adminer ${{ steps.detect.outputs.latest }} needs bridge work" \
+            --title "${title}" \
             --label dependencies \
             --body "$(cat <<BODY
           Adminer **${{ steps.detect.outputs.latest }}** is out, but \`${{ steps.detect.outputs.bridge }}\` was not released: ${{ steps.gate.outputs.reason }}.
@@ -299,8 +308,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          title="Adminer release workflow failed"
+
+          if [ -n "$(gh issue list --state open --search "\"${title}\" in:title" --json number --jq '.[0].number')" ]; then
+            echo "An open issue already exists; not filing another."
+            exit 0
+          fi
+
           gh issue create \
-            --title "Adminer release workflow failed" \
+            --title "${title}" \
             --label dependencies \
             --body "$(cat <<BODY
           The scheduled Adminer release workflow failed before it could decide whether to release.

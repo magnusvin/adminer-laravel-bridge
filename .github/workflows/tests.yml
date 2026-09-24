@@ -64,9 +64,15 @@ jobs:
       - name: Linter
         run: composer lint:check
 
+      # The plugin caches its analysis in vendor/.../.temp/v3.php. That file has
+      # been observed truncated mid-write in CI, failing the run with a
+      # ParseError that a rerun of the same commit did not reproduce. Starting
+      # cold costs a few seconds and removes the stale-cache variable.
       - name: Type Coverage
         if: runner.os != 'Windows'
-        run: composer test:types
+        run: |
+          rm -rf vendor/pestphp/pest-plugin-type-coverage/.temp
+          composer test:types
 
       - name: Test Suite
         if: runner.os != 'Windows'
