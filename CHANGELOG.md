@@ -1,8 +1,29 @@
 # Release Notes
 
-## [Unreleased](https://github.com/magnusvin/adminer-laravel-bridge/commits/main/compare/6.0.1.0...HEAD)
+## [Unreleased](https://github.com/magnusvin/adminer-laravel-bridge/commits/main/compare/6.0.2.0...HEAD)
 
 No unreleased changes yet. See [Versioning](README.md#versioning) for how release version numbers are chosen.
+
+## [6.0.2.0](https://github.com/magnusvin/adminer-laravel-bridge/commits/main/compare/6.0.1.0...6.0.2.0) - 2026-09-24
+
+Ships **Adminer 6.0.2** ([upstream changelog](https://github.com/vrana/adminer/blob/v6.0.2/CHANGELOG.md)). **Security release — upgrading is recommended.**
+
+### Adminer 6.0.2
+
+Two security fixes:
+
+- [GHSA-rwxg-xph9-82cj](https://github.com/vrana/adminer/security/advisories/GHSA-rwxg-xph9-82cj) — not all parts of the server name were verified before connecting (a regression introduced in Adminer 5.5.1).
+- [GHSA-7c5h-q78c-fpxx](https://github.com/vrana/adminer/security/advisories/GHSA-7c5h-q78c-fpxx) — XSS through the connection id returned by the server.
+
+Also: numbers are formatted according to the conventions of the selected language, routines are altered through a form instead of by editing the definition, autocomplete got faster and reaches further, RTL layouts mirror borders and spacing, and MySQL check constraint clauses display without `information_schema`'s extra escaping.
+
+### Changed in the bridge
+
+Nothing. 6.0.2 adds `adminer/static/worker.js` to cache the assets of the compiled build, but `service_worker()` skips registration whenever `Adminer\DIR` is defined — which it is here, since the bridge serves the development sources — so nothing requests it.
+
+Verified against a running workbench: every asset the page links still serves, and no service worker is registered.
+
+**Full Changelog**: https://github.com/magnusvin/adminer-laravel-bridge/compare/6.0.1.0...6.0.2.0
 
 ## [6.0.1.0](https://github.com/magnusvin/adminer-laravel-bridge/commits/main/compare/6.0.0.1...6.0.1.0) - 2026-09-24
 
