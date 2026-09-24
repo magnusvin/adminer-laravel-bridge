@@ -26,4 +26,21 @@ class GuardedRouteTest extends TestCase
 
         $this->assertContains('auth:web', $route->gatherMiddleware());
     }
+
+    /**
+     * The guard protects the database, not the stylesheet. Adminer's own login
+     * form is rendered by the guarded route, so if the assets were guarded too
+     * the redirect to the login screen would leave it unstyled.
+     */
+    public function test_it_leaves_the_asset_routes_reachable_without_the_guard(): void
+    {
+        foreach (['adminer-bridge.static', 'adminer-bridge.design'] as $name) {
+            $this->assertNotContains(
+                'auth:web',
+                Route::getRoutes()->getByName($name)?->gatherMiddleware() ?? [],
+            );
+        }
+
+        $this->get('/adminer/static/default.css')->assertOk();
+    }
 }
