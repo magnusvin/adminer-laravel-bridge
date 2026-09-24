@@ -1,8 +1,33 @@
 # Release Notes
 
-## [Unreleased](https://github.com/magnusvin/adminer-laravel-bridge/commits/main/compare/6.0.2.0...HEAD)
+## [Unreleased](https://github.com/magnusvin/adminer-laravel-bridge/commits/main/compare/6.1.0.0...HEAD)
 
 No unreleased changes yet. See [Versioning](README.md#versioning) for how release version numbers are chosen.
+
+## [6.1.0.0](https://github.com/magnusvin/adminer-laravel-bridge/commits/main/compare/6.0.2.0...6.1.0.0) - 2026-09-24
+
+Ships **Adminer 6.1.0** ([upstream changelog](https://github.com/vrana/adminer/blob/v6.1.0/CHANGELOG.md)).
+
+### Adminer 6.1.0
+
+The Oracle driver is out of beta and now uses schemas as databases, with triggers, database creation, well-known-text geometries and ISO dates. MS SQL can display, create, alter, drop and call procedures and functions. PostgreSQL shows PostGIS geometries as EWKT and lists installed extensions on the database page. Export can qualify all names by schema or export the schema itself. Adminer can be installed as a web application, and SQL command results can be modified in place by Ctrl+click.
+
+### Changed in the bridge
+
+Nothing in the code — but two upstream changes are visible through it:
+
+- **`adminer/static/logo.png` is now `logo.svg`.** The bridge serves whatever Adminer links to and never names the file, so no change was needed here. If your application asserts on `/adminer/static/logo.png`, that path now returns 404 and you should expect `logo.svg` (`image/svg+xml`) instead. This is the kind of drift the exact `vrana/adminer` pin introduced in 6.0.0.1 exists to keep out of your `composer update` — see [Versioning](https://github.com/magnusvin/adminer-laravel-bridge#versioning) for picking a constraint that matches how much movement you want.
+- **A web app manifest** is served by Adminer at `?manifest=`, through the main route, so it inherits your configured middleware and guard. Its `start_url`, `scope` and icon are all relative and resolve under your configured prefix.
+
+The service worker added in 6.0.2 still is not registered: that is gated on `Adminer\DIR` being undefined, and the bridge serves the development sources.
+
+### Tests
+
+The asset routes — the part of this bridge upstream keeps moving under it — are now covered directly: every static file the pinned release ships must serve, CSS and JS carry asserted content types, the logo must serve as an image without naming its extension, multi-segment route prefixes are exercised, and a configured guard must not lock the assets away from the login form it renders.
+
+Verified against a running workbench: every linked asset serves, `logo.svg` comes back as `image/svg+xml`, and the manifest is valid JSON with `application/manifest+json`.
+
+**Full Changelog**: https://github.com/magnusvin/adminer-laravel-bridge/compare/6.0.2.0...6.1.0.0
 
 ## [6.0.2.0](https://github.com/magnusvin/adminer-laravel-bridge/commits/main/compare/6.0.1.0...6.0.2.0) - 2026-09-24
 
