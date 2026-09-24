@@ -23,16 +23,15 @@ it('does not throttle the main route when rate limiting is disabled by default',
     expect(array_filter($route->gatherMiddleware(), fn ($m) => str_starts_with($m, 'throttle:')))->toBe([]);
 });
 
-it('registers static, jush, and design asset routes under the configured prefix', function () {
+it('registers static and design asset routes under the configured prefix', function () {
     expect(Route::getRoutes()->getByName('adminer-bridge.static'))->not->toBeNull()
-        ->and(Route::getRoutes()->getByName('adminer-bridge.jush'))->not->toBeNull()
         ->and(Route::getRoutes()->getByName('adminer-bridge.design'))->not->toBeNull();
 });
 
-it('nests the jush asset route fully under the configured prefix', function () {
-    $route = Route::getRoutes()->getByName('adminer-bridge.jush');
+it('nests the static asset route fully under the configured prefix', function () {
+    $route = Route::getRoutes()->getByName('adminer-bridge.static');
 
-    expect($route->uri())->toBe('adminer/externals/jush/{file}');
+    expect($route->uri())->toBe('adminer/static/{file}');
 });
 
 it('nests the design asset route fully under the configured prefix', function () {

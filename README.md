@@ -16,7 +16,7 @@ A Laravel bridge for [Adminer](https://www.adminer.org/), the single-file databa
 
 - PHP 8.3+
 - Laravel 12.x or 13.x
-- [`vrana/adminer`](https://packagist.org/packages/vrana/adminer) 6.0.0 (installed automatically as a dependency, pinned to an exact version — see [Versioning](#versioning))
+- [`vrana/adminer`](https://packagist.org/packages/vrana/adminer) 6.0.1 (installed automatically as a dependency, pinned to an exact version — see [Versioning](#versioning))
 
 ## Installation
 
@@ -101,14 +101,33 @@ By default the Adminer UI is available at `/adminer`. Since Adminer handles its 
 
 ## Versioning
 
-This package tracks [Adminer](https://www.adminer.org/)'s own release cycle instead of an independent semver line. A version has four segments: the first three are the exact `vrana/adminer` release the package ships, and the fourth is this package's own patch counter for fixes made without an upstream Adminer bump.
+This package tracks [Adminer](https://www.adminer.org/)'s own release cycle instead of an independent semver line. A version has four segments:
 
-- A bridge-only fix (no Adminer version change) bumps the last segment, e.g. `6.0.0.0` → `6.0.0.1`.
-- A new Adminer release resets the last segment to `0` and adopts Adminer's new version, e.g. `6.0.0.4` → `6.1.0.0`.
+```
+6 . 0 . 1 . 2
+└───┬───┘   └── this package's own patch counter
+    └────────── the exact vrana/adminer release the package ships
+```
 
-To make that mapping a guarantee rather than a convention, `vrana/adminer` is required at an **exact version** (`6.0.0`, not `^6.0`), and `vrana/jush` is constrained to patch releases only (`~3.1.0`). Installing `magnusvin/adminer-laravel-bridge:6.0.0.*` therefore always gives you Adminer 6.0.0 — never a minor or patch bump that arrived upstream after this bridge release was tested. An upstream Adminer release reaches you through a matching bridge release, not silently through a `composer update`.
+- A bridge-only fix (no Adminer version change) bumps the last segment, e.g. `6.0.1.0` → `6.0.1.1`.
+- A new Adminer release resets the last segment to `0` and adopts Adminer's version, e.g. `6.0.1.2` → `6.0.2.0`.
 
-Composer accepts the four-segment format natively, but keep in mind it does **not** carry the usual semver guarantee that the first number only changes on a breaking change *to this package's own API* — it changes whenever upstream Adminer does. A `^6.0.0.0` constraint on this package still spans every Adminer 6.x release, so pin a full version (or a `~6.0.0.0` style constraint, which stays on Adminer 6.0.0) if you want to control Adminer upgrades explicitly, and check the [CHANGELOG](CHANGELOG.md) before bumping across an Adminer version boundary.
+`vrana/adminer` is required at an **exact version**, so the mapping is a guarantee and not a convention: installing `6.0.1.*` of this package always gives you Adminer 6.0.1, never a minor or patch that arrived upstream after this bridge release was tested. Every Adminer release gets its own bridge release, so an upstream upgrade is always something you opt into.
+
+### Choosing a constraint
+
+The trade-off is how much of Adminer you let move on a `composer update`. The four segments make that a dial rather than a switch:
+
+| Constraint | Adminer moves | Bridge fixes | Use when |
+| --- | --- | --- | --- |
+| `6.0.1.0` | never | never | you want a byte-identical install, pinned by the lock file anyway |
+| `~6.0.1.0` | never | yes | **recommended** - bridge fixes only, Adminer frozen at 6.0.1 |
+| `~6.0.1` | 6.0.x patches | yes | you want upstream security patches, no feature changes |
+| `^6.0` | all 6.x | yes | you follow Adminer's 6.x line and read its changelog |
+
+`6.0.1.*`, `6.0.*` and `6.*` are equivalent to rows two, three and four respectively, if you prefer wildcards.
+
+Note that this is **not** ordinary semver: the first segment changes whenever upstream Adminer's does, not when this package breaks its own API. So `^6.0` does not mean "no breaking changes" - it means "any Adminer 6.x", and Adminer's minor releases do move things (6.1.0 renamed `logo.png` to `logo.svg`, for instance). Pick a row, then read the [CHANGELOG](CHANGELOG.md) before widening it - each entry summarises what changed upstream, links Adminer's own changelog, and calls out anything that changed in the bridge itself.
 
 ## Roadmap
 

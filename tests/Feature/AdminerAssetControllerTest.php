@@ -22,12 +22,20 @@ it('blocks path traversal attempts on the static controller', function () {
     (new AdminerAssetController)->static('../../../../../../../../../../etc/passwd');
 })->throws(NotFoundHttpException::class);
 
-it('blocks path traversal attempts on the jush controller', function () {
-    (new AdminerAssetController)->jush('../../../../../../../../../../etc/passwd');
+it('serves jush from the vrana/jush package, where Adminer ships an empty submodule directory', function () {
+    $response = $this->get('/adminer/static/jush/jush.css');
+
+    $response->assertOk();
+    expect($response->getFile()->getRealPath())
+        ->toBe(realpath(InstalledVersions::getInstallPath('vrana/jush').'/jush.css'));
+});
+
+it('blocks path traversal attempts through the jush prefix', function () {
+    (new AdminerAssetController)->static('jush/../../../../../../../../../../etc/passwd');
 })->throws(NotFoundHttpException::class);
 
 it('404s for a jush asset that does not exist', function () {
-    $this->get('/adminer/externals/jush/does-not-exist.css')->assertNotFound();
+    $this->get('/adminer/static/jush/does-not-exist.css')->assertNotFound();
 });
 
 it('serves a real design asset through the configured route', function () {

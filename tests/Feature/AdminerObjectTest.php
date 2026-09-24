@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-it('rewrites the jush stylesheet links to the nested route', function () {
+it('leaves the jush stylesheet links pointing at the static asset route', function () {
     require_once __DIR__.'/../../vendor/vrana/adminer/adminer/include/adminer.inc.php';
     require_once __DIR__.'/../../vendor/vrana/adminer/adminer/include/html.inc.php';
     require_once __DIR__.'/../../vendor/vrana/adminer/adminer/include/functions.inc.php';
@@ -13,8 +13,8 @@ it('rewrites the jush stylesheet links to the nested route', function () {
     adminer_object()->head(null);
     $html = ob_get_clean();
 
-    expect($html)->toContain(route('adminer-bridge.jush', ['file' => 'jush.css']))
-        ->toContain(route('adminer-bridge.jush', ['file' => 'jush-dark.css']))
+    expect($html)->toContain('./static/jush/jush.css')
+        ->toContain('./static/jush/jush-dark.css')
         ->not->toContain('../externals/jush/');
 });
 

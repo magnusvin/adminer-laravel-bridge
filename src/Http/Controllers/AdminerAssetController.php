@@ -11,14 +11,23 @@ use Symfony\Component\Mime\MimeTypes;
 
 class AdminerAssetController
 {
+    /**
+     * Adminer 6.0.1 moved jush from externals/ into adminer/static/jush, but
+     * it lives there as a Git submodule - the Composer package ships that
+     * directory empty. So the path Adminer links to is right while the files
+     * behind it are not there, and jush requests are resolved against the
+     * separate vrana/jush package instead.
+     */
     public function static(string $file): BinaryFileResponse
     {
-        return $this->serveFrom(InstalledVersions::getInstallPath('vrana/adminer').'/adminer/static', $file);
-    }
+        if (str_starts_with($file, 'jush/')) {
+            return $this->serveFrom(
+                InstalledVersions::getInstallPath('vrana/jush'),
+                substr($file, strlen('jush/')),
+            );
+        }
 
-    public function jush(string $file): BinaryFileResponse
-    {
-        return $this->serveFrom(InstalledVersions::getInstallPath('vrana/jush'), $file);
+        return $this->serveFrom(InstalledVersions::getInstallPath('vrana/adminer').'/adminer/static', $file);
     }
 
     public function design(string $design, string $file): BinaryFileResponse

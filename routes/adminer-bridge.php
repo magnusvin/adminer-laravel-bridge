@@ -7,8 +7,6 @@ use AdminerBridge\AdminerBridge\Http\Controllers\AdminerController;
 use Illuminate\Support\Facades\Route;
 
 $prefix = trim((string) config('adminer-bridge.route.prefix'), '/');
-$parent = trim(dirname($prefix), '/.');
-$assetPrefix = $parent === '' ? '' : "{$parent}/";
 
 $middleware = (array) config('adminer-bridge.route.middleware', []);
 
@@ -25,24 +23,21 @@ if ($rateLimit['enabled'] ?? false) {
 }
 
 /**
- * Adminer's own markup hardcodes "../adminer/static/…" relative to whatever
- * directory it's served from, so that route must be anchored one level above
- * the configured prefix — never off the prefix itself, which only happened
- * to work while the prefix was literally "adminer".
+ * Adminer 6.0.1 made its development version runnable from the adminer/
+ * directory under any name, which turned every hardcoded asset link into a
+ * "./static/…" path relative to the served directory - so the asset route can
+ * now simply live under the configured prefix. Before that, the links were
+ * "../adminer/static/…" and this route had to be anchored one level above the
+ * prefix, which only worked cleanly while the prefix was literally "adminer".
  *
- * The jush asset links are rewritten to this named route by adminer-object.php
- * (see head() and syntaxHighlighting() there), so this route is free to live
- * fully nested under the configured prefix instead of following Adminer's
- * hardcoded "../externals/jush/…" convention.
+ * jush moved into adminer/static/jush in the same release, so it arrives
+ * through this same route rather than a dedicated one - see
+ * AdminerAssetController::static() for why it is not served from there.
  */
-Route::domain(config('adminer-bridge.route.domain'))->group(function () use ($prefix, $assetPrefix, $middleware) {
-    Route::get("{$assetPrefix}adminer/static/{file}", [AdminerAssetController::class, 'static'])
+Route::domain(config('adminer-bridge.route.domain'))->group(function () use ($prefix, $middleware) {
+    Route::get("{$prefix}/static/{file}", [AdminerAssetController::class, 'static'])
         ->where('file', '.*')
         ->name('adminer-bridge.static');
-
-    Route::get("{$prefix}/externals/jush/{file}", [AdminerAssetController::class, 'jush'])
-        ->where('file', '.*')
-        ->name('adminer-bridge.jush');
 
     Route::get("{$prefix}/designs/{design}/{file}", [AdminerAssetController::class, 'design'])
         ->where('design', '[\w-]+')

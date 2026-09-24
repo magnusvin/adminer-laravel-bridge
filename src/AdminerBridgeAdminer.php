@@ -37,22 +37,16 @@ class AdminerBridgeAdminer extends Adminer
     }
 
     /**
-     * Adminer hardcodes its jush asset links as "../externals/jush/…",
-     * relative to wherever it's served from. Rather than fork the vendored
-     * methods that print those links, let them run unchanged and rewrite the
-     * known literal path in their output to point at our own route, fully
-     * nested under the configured prefix - or drop the links entirely when
-     * jush is disabled.
+     * Adminer's head() prints nothing but the two jush stylesheets, so
+     * skipping it altogether is how jush is disabled - the favicon it would
+     * have asked for is still linked by returning true. Since Adminer 6.0.1
+     * the links it prints resolve to "./static/jush/…" under the served
+     * directory, which the asset route already covers, so they no longer need
+     * rewriting.
      */
     public function head(?bool $dark = null): bool
     {
-        if ($this->jushEnabled) {
-            ob_start();
-            $linkFavicon = parent::head($dark);
-            echo str_replace('../externals/jush/', $this->jushBaseUrl(), (string) ob_get_clean());
-        } else {
-            $linkFavicon = true;
-        }
+        $linkFavicon = $this->jushEnabled ? parent::head($dark) : true;
 
         if ($this->productionWarningText !== null && $this->productionWarningText !== '') {
             echo script($this->productionWarningScript());
@@ -133,9 +127,7 @@ class AdminerBridgeAdminer extends Adminer
             return;
         }
 
-        ob_start();
         parent::syntaxHighlighting($tables);
-        echo str_replace('../externals/jush/', $this->jushBaseUrl(), (string) ob_get_clean());
     }
 
     public function css(): array
@@ -192,13 +184,6 @@ class AdminerBridgeAdminer extends Adminer
         }
 
         return parent::loginFormField($name, $heading, $value);
-    }
-
-    private function jushBaseUrl(): string
-    {
-        $placeholder = '__jush_file__';
-
-        return substr(route('adminer-bridge.jush', ['file' => $placeholder]), 0, -strlen($placeholder));
     }
 
     /**
