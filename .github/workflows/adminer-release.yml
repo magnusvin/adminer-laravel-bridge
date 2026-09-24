@@ -1,0 +1,312 @@
+#
+# Cut a bridge release whenever Adminer publishes one.
+#
+# This package pins vrana/adminer to an exact version, so a new Adminer release
+# cannot reach anyone until a bridge release moves the pin. That makes tracking
+# upstream promptly the whole job, and it also bounds the blast radius of doing
+# it automatically: a new release only reaches people who chose a constraint
+# wide enough to accept it (see "Choosing a constraint" in the README).
+#
+# The gate is the full test matrix plus the asset smoke test, run on a branch
+# before anything is tagged. If any of it is red, nothing is released and an
+# issue is opened with the branch left in place to pick up by hand.
+#
+name: Adminer release
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: adminer-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: 8.4
+          tools: composer:v2
+          coverage: none
+
+      - name: Find the newest stable Adminer release
+        id: detect
+        run: |
+          current="$(php -r 'echo json_decode(file_get_contents("composer.json"), true)["require"]["vrana/adminer"];')"
+          latest="$(
+            curl -sf https://repo.packagist.org/p2/vrana/adminer.json \
+              | php -r '
+                  $data = json_decode(file_get_contents("php://stdin"), true);
+                  $versions = [];
+                  foreach ($data["packages"]["vrana/adminer"] ?? [] as $package) {
+                      $version = ltrim((string) $package["version"], "v");
+                      // Stable releases only - no alpha, beta, RC or dev.
+                      if (preg_match("/^\d+\.\d+\.\d+$/", $version)) {
+                          $versions[] = $version;
+                      }
+                  }
+                  usort($versions, "version_compare");
+                  echo end($versions) ?: "";
+                '
+          )"
+
+          if [ -z "${latest}" ]; then
+            echo "Could not determine the latest Adminer version" >&2
+            exit 1
+          fi
+
+          # Everything downstream assumes the pin is an exact version: that is
+          # what makes "current == latest" a meaningful up-to-date check and
+          # what makes the bridge version derivable from it. A loosened
+          # constraint would otherwise make this workflow try to release daily.
+          if ! printf '%s' "${current}" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "vrana/adminer is constrained as '${current}', not an exact version." >&2
+            echo "Refusing to release automatically until the pin is exact again." >&2
+            exit 1
+          fi
+
+          echo "current=${current}" >> "$GITHUB_OUTPUT"
+          echo "latest=${latest}" >> "$GITHUB_OUTPUT"
+          echo "bridge=${latest}.0" >> "$GITHUB_OUTPUT"
+
+          if [ "${current}" = "${latest}" ]; then
+            echo "up_to_date=true" >> "$GITHUB_OUTPUT"
+            echo "Already on Adminer ${current}; nothing to do."
+          else
+            echo "up_to_date=false" >> "$GITHUB_OUTPUT"
+            echo "Adminer ${current} -> ${latest}"
+          fi
+
+      - name: Stop if a release already exists for this version
+        id: guard
+        if: steps.detect.outputs.up_to_date == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "${{ steps.detect.outputs.bridge }}" >/dev/null 2>&1; then
+            echo "Release ${{ steps.detect.outputs.bridge }} already exists; not recreating it."
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Bump the pin
+        id: bump
+        if: steps.detect.outputs.up_to_date == 'false' && steps.guard.outputs.exists == 'false'
+        run: |
+          latest="${{ steps.detect.outputs.latest }}"
+
+          php -r '
+            $file = "composer.json";
+            $contents = file_get_contents($file);
+            $updated = preg_replace(
+                "#(\"vrana/adminer\": \")[^\"]+(\")#",
+                "\${1}" . $argv[1] . "\${2}",
+                $contents,
+                1,
+                $count
+            );
+            if ($count !== 1) {
+                fwrite(STDERR, "Could not rewrite the vrana/adminer constraint in composer.json\n");
+                exit(1);
+            }
+            file_put_contents($file, $updated);
+          ' "${latest}"
+
+          # Keep the Requirements line in the README in step with the pin.
+          php -r '
+            $file = "README.md";
+            $contents = file_get_contents($file);
+            $updated = preg_replace(
+                "#(\(https://packagist\.org/packages/vrana/adminer\) )\d+\.\d+\.\d+#",
+                "\${1}" . $argv[1],
+                $contents,
+                1,
+                $count
+            );
+            if ($count !== 1) {
+                fwrite(STDERR, "Could not rewrite the Adminer version in the README requirements\n");
+                exit(1);
+            }
+            file_put_contents($file, $updated);
+          ' "${latest}"
+
+          composer update vrana/adminer --no-interaction --no-scripts
+
+          # Adminer ships its own changelog; the release notes quote the
+          # section for exactly this version rather than paraphrasing it.
+          php -r '
+            $version = $argv[1];
+            $changelog = @file_get_contents("vendor/vrana/adminer/CHANGELOG.md") ?: "";
+            $pattern = "/^## Adminer " . preg_quote($version, "/") . "\b.*?$(?<body>.*?)(?=^## Adminer |\z)/ms";
+            echo preg_match($pattern, $changelog, $matches) === 1
+                ? trim($matches["body"])
+                : "";
+          ' "${latest}" > /tmp/upstream-changelog.md
+
+          echo "--- upstream changelog section ---"
+          cat /tmp/upstream-changelog.md
+
+      - name: Push the bump to a branch for the matrix to gate
+        id: branch
+        if: steps.detect.outputs.up_to_date == 'false' && steps.guard.outputs.exists == 'false'
+        run: |
+          branch="adminer/${{ steps.detect.outputs.latest }}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git checkout -b "${branch}"
+          git add composer.json composer.lock README.md
+          git commit -m "Track Adminer ${{ steps.detect.outputs.latest }}
+
+          Pins vrana/adminer to ${{ steps.detect.outputs.latest }}. Opened
+          automatically by the Adminer release workflow; released only if the
+          full test matrix and the asset smoke test pass on this branch.
+
+          Upstream changelog:
+          https://github.com/vrana/adminer/blob/v${{ steps.detect.outputs.latest }}/CHANGELOG.md"
+
+          git push --force-with-lease origin "${branch}"
+          echo "name=${branch}" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for the test matrix on that branch
+        id: gate
+        if: steps.detect.outputs.up_to_date == 'false' && steps.guard.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          branch="${{ steps.branch.outputs.name }}"
+          sha="${{ steps.branch.outputs.sha }}"
+
+          # Give the push event time to register a run.
+          for _ in $(seq 1 30); do
+            run_id="$(gh run list --workflow=tests.yml --branch "${branch}" \
+              --json databaseId,headSha --jq "[.[] | select(.headSha == \"${sha}\")] | .[0].databaseId")"
+            [ -n "${run_id}" ] && [ "${run_id}" != "null" ] && break
+            sleep 10
+          done
+
+          if [ -z "${run_id}" ] || [ "${run_id}" = "null" ]; then
+            echo "No test run appeared for ${branch}@${sha}" >&2
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+            echo "reason=no test run was triggered for the branch" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Watching run ${run_id}"
+          gh run watch "${run_id}" --interval 30 >/dev/null 2>&1 || true
+
+          conclusion="$(gh run view "${run_id}" --json conclusion --jq .conclusion)"
+          echo "run=${run_id}" >> "$GITHUB_OUTPUT"
+          echo "url=$(gh run view "${run_id}" --json url --jq .url)" >> "$GITHUB_OUTPUT"
+
+          if [ "${conclusion}" = "success" ]; then
+            echo "passed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+            echo "reason=the test matrix concluded '${conclusion}'" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Release
+        if: steps.gate.outputs.passed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          bridge="${{ steps.detect.outputs.bridge }}"
+          latest="${{ steps.detect.outputs.latest }}"
+          previous="$(gh release view --json tagName --jq .tagName)"
+
+          # Fails loudly if main moved while the matrix ran, rather than
+          # releasing something that was never tested in that state.
+          git push origin "${{ steps.branch.outputs.sha }}:main"
+
+          git tag -a "${bridge}" -m "${bridge}" "${{ steps.branch.outputs.sha }}"
+          git push origin "${bridge}"
+
+          {
+            echo "Ships **Adminer ${latest}** ([upstream changelog](https://github.com/vrana/adminer/blob/v${latest}/CHANGELOG.md))."
+            echo
+            echo "### Adminer ${latest}"
+            echo
+            if [ -s /tmp/upstream-changelog.md ]; then
+              cat /tmp/upstream-changelog.md
+            else
+              echo "See the [upstream changelog](https://github.com/vrana/adminer/blob/v${latest}/CHANGELOG.md)."
+            fi
+            echo
+            echo "### Changed in the bridge"
+            echo
+            echo "Nothing. This release moves the \`vrana/adminer\` pin and nothing else."
+            echo "It was cut automatically once the full test matrix and the asset smoke"
+            echo "test passed against Adminer ${latest}. Those cover the package's wiring,"
+            echo "routing and asset serving; they do not exercise Adminer's own UI behind a"
+            echo "database connection, so read the upstream changelog above for what changed"
+            echo "inside Adminer itself."
+            echo
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${previous}...${bridge}"
+          } > /tmp/release-notes.md
+
+          gh release create "${bridge}" \
+            --title "${bridge}" \
+            --notes-file /tmp/release-notes.md \
+            --verify-tag \
+            --latest
+
+          git push origin --delete "${{ steps.branch.outputs.name }}" || true
+
+      - name: Report a failed gate
+        if: steps.gate.outputs.passed == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create \
+            --title "Adminer ${{ steps.detect.outputs.latest }} needs bridge work" \
+            --label dependencies \
+            --body "$(cat <<BODY
+          Adminer **${{ steps.detect.outputs.latest }}** is out, but \`${{ steps.detect.outputs.bridge }}\` was not released: ${{ steps.gate.outputs.reason }}.
+
+          The bump is on [\`${{ steps.branch.outputs.name }}\`](https://github.com/${{ github.repository }}/tree/${{ steps.branch.outputs.name }}) and the branch has been left in place. Failing run: ${{ steps.gate.outputs.url }}
+
+          Upstream changelog: https://github.com/vrana/adminer/blob/v${{ steps.detect.outputs.latest }}/CHANGELOG.md
+
+          Fix it on that branch; merging it to \`main\` and tagging \`${{ steps.detect.outputs.bridge }}\` completes the release.
+          BODY
+          )"
+
+      # A scheduled workflow that fails quietly is a scheduled workflow nobody
+      # notices has stopped working. Anything unexpected - a push race on main,
+      # a Packagist outage, a failed tag - surfaces as an issue too.
+      - name: Report an unexpected failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create \
+            --title "Adminer release workflow failed" \
+            --label dependencies \
+            --body "$(cat <<BODY
+          The scheduled Adminer release workflow failed before it could decide whether to release.
+
+          Detected: \`${{ steps.detect.outputs.current }}\` currently pinned, \`${{ steps.detect.outputs.latest }}\` latest upstream.
+
+          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          BODY
+          )"

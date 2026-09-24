@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - '*.x'
+      - 'adminer/**'
   pull_request:
 
 permissions:
@@ -74,3 +75,35 @@ jobs:
       - name: Test Suite (Windows)
         if: runner.os == 'Windows'
         run: vendor/bin/pest
+
+  smoke:
+    runs-on: ubuntu-latest
+
+    name: Asset smoke test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: 8.4
+          extensions: dom, curl, libxml, mbstring, zip, fileinfo, sqlite, pdo_sqlite, bcmath, intl
+          ini-values: error_reporting=E_ALL
+          tools: composer:v2
+          coverage: none
+
+      - name: Install dependencies
+        run: |
+          composer update --prefer-dist --no-interaction --no-progress --no-scripts
+          composer run prepare
+
+      - name: Generate APP_KEY
+        run: echo "APP_KEY=base64:$(php -r 'echo base64_encode(random_bytes(32));')" >> $GITHUB_ENV
+
+      # The Pest suite proves the asset routes serve what Adminer ships; this
+      # proves Adminer actually links to those routes. Adminer exits() while
+      # rendering the login form, so that half is only observable over HTTP.
+      - name: Assets Adminer links to are served
+        run: bash .github/scripts/smoke-assets.sh

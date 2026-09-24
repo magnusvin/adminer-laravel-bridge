@@ -129,11 +129,15 @@ The trade-off is how much of Adminer you let move on a `composer update`. The fo
 
 Note that this is **not** ordinary semver: the first segment changes whenever upstream Adminer's does, not when this package breaks its own API. So `^6.0` does not mean "no breaking changes" - it means "any Adminer 6.x", and Adminer's minor releases do move things (6.1.0 renamed `logo.png` to `logo.svg`, for instance). Pick a row, then read the [CHANGELOG](CHANGELOG.md) before widening it - each entry summarises what changed upstream, links Adminer's own changelog, and calls out anything that changed in the bridge itself.
 
-## Roadmap
+## Release automation
 
-- Dependabot is configured for GitHub Actions and Composer dependencies (weekly). Because `vrana/adminer` is pinned exactly, an upstream Adminer release can no longer reach users through a `composer update` on their side — it has to come through a bridge release that moves the pin, which is what keeps the version numbers honest.
-- Future releases are intended to follow shortly after each upstream Adminer tag, keeping the first three version segments in lockstep with the pinned `vrana/adminer` version.
-- Contributions and issue reports that help track Adminer's release cadence are welcome — see [Contributing](#contributing) below.
+Releases are cut automatically. A scheduled workflow checks Packagist daily for a new stable `vrana/adminer`, and when it finds one it moves the pin, pushes the bump to an `adminer/<version>` branch, and waits for the full test matrix and the asset smoke test to finish on that branch. Only if everything is green does it fast-forward `main`, tag `<adminer version>.0`, and publish a release quoting Adminer's own changelog for that version. If anything is red it releases nothing and opens an issue, leaving the branch in place to pick up by hand.
+
+Automating this is only reasonable because of the exact pin: a new bridge release cannot reach anyone who did not choose a constraint wide enough to accept it, so tracking upstream quickly costs you nothing you did not opt into.
+
+What the gate does and does not prove is worth knowing if you run a wide constraint. It covers this package's wiring — service provider, routes, middleware, config, publishing, session and cookie handling — and it covers asset serving from both ends: the test suite requires every static file the pinned Adminer ships to be served with a sane content type, and the smoke test renders a real page over HTTP and requires every asset Adminer links to to resolve. That second half exists because Adminer moved its asset paths in 6.0.1 and renamed its logo in 6.1.0, and a route test alone cannot see either. A reflection test also fails the build if an overridden method stops existing upstream, so a hook cannot silently die.
+
+It does not connect to a database. Nothing behind Adminer's login — select, edit, export, SQL command — is exercised, and behaviour changes inside Adminer's own pages will pass the gate. Read Adminer's changelog, linked from every release, before widening your constraint across a version boundary.
 
 ## Changelog
 
