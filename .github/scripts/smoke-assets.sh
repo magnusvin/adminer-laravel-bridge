@@ -26,6 +26,13 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# The workbench only routes this package once Testbench has discovered it, and
+# that registration does not survive a --no-scripts install or a skeleton purge.
+# Doing it here rather than relying on the caller keeps the gate from failing
+# for a reason that has nothing to do with the code under test.
+echo "==> Discovering the package"
+composer prepare --quiet || { echo "FAIL: package discovery failed"; exit 1; }
+
 echo "==> Building workbench"
 composer build --quiet || { echo "FAIL: workbench build failed"; exit 1; }
 

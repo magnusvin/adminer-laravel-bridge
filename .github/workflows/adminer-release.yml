@@ -147,7 +147,9 @@ jobs:
             file_put_contents($file, $updated);
           ' "${latest}"
 
-          composer update vrana/adminer --no-interaction --no-scripts
+          # composer.lock is gitignored (this is a library), so there is no lock
+          # file to update a single package against - resolve the whole set.
+          composer update --no-interaction --no-scripts
 
           # Adminer ships its own changelog; the release notes quote the
           # section for exactly this version rather than paraphrasing it.
@@ -173,7 +175,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           git checkout -b "${branch}"
-          git add composer.json composer.lock README.md
+          git add composer.json README.md
           git commit -m "Track Adminer ${{ steps.detect.outputs.latest }}
 
           Pins vrana/adminer to ${{ steps.detect.outputs.latest }}. Opened
@@ -279,6 +281,10 @@ jobs:
         run: |
           title="Adminer ${{ steps.detect.outputs.latest }} needs bridge work"
 
+          # gh fails the whole command on an unknown label, which would swallow
+          # the report this step exists to file.
+          gh label create dependencies --color 0366d6 --description "Dependency updates" 2>/dev/null || true
+
           # This workflow runs daily. Without this check a version that stays
           # broken would file the same issue every morning.
           if [ -n "$(gh issue list --state open --search "\"${title}\" in:title" --json number --jq '.[0].number')" ]; then
@@ -309,6 +315,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           title="Adminer release workflow failed"
+
+          gh label create dependencies --color 0366d6 --description "Dependency updates" 2>/dev/null || true
 
           if [ -n "$(gh issue list --state open --search "\"${title}\" in:title" --json number --jq '.[0].number')" ]; then
             echo "An open issue already exists; not filing another."
