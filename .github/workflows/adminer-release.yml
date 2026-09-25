@@ -277,9 +277,6 @@ jobs:
           # releasing something that was never tested in that state.
           git push origin "${{ steps.branch.outputs.sha }}:main"
 
-          git tag -a "${bridge}" -m "${bridge}" "${{ steps.branch.outputs.sha }}"
-          git push origin "${bridge}"
-
           {
             echo "Ships **Adminer ${latest}** ([upstream changelog](https://github.com/vrana/adminer/blob/v${latest}/CHANGELOG.md))."
             echo
@@ -302,6 +299,22 @@ jobs:
             echo
             echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${previous}...${bridge}"
           } > /tmp/release-notes.md
+
+          # update-changelog.yml listens for the release event, and GitHub does
+          # not raise those for a release created with GITHUB_TOKEN - so the
+          # entry has to be written here rather than waited for.
+          php .github/scripts/changelog-entry.php \
+            "${bridge}" "${previous}" "$(date -u +%Y-%m-%d)" /tmp/release-notes.md
+
+          git add CHANGELOG.md
+          # The script is a no-op if the entry is already there, e.g. on a retry.
+          if ! git diff --cached --quiet; then
+            git commit -m "Update CHANGELOG for ${bridge}"
+          fi
+          git push origin HEAD:main
+
+          git tag -a "${bridge}" -m "${bridge}"
+          git push origin "${bridge}"
 
           gh release create "${bridge}" \
             --title "${bridge}" \

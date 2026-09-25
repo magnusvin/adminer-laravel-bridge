@@ -1,8 +1,73 @@
 # Release Notes
 
-## [Unreleased](https://github.com/magnusvin/adminer-laravel-bridge/commits/main/compare/6.1.0.0...HEAD)
+## [Unreleased](https://github.com/magnusvin/adminer-laravel-bridge/commits/main/compare/6.1.1.0...HEAD)
 
 No unreleased changes yet. See [Versioning](README.md#versioning) for how release version numbers are chosen.
+
+## [6.1.1.0](https://github.com/magnusvin/adminer-laravel-bridge/commits/main/compare/6.1.0.0...6.1.1.0) - 2026-09-25
+
+Ships **Adminer 6.1.1** ([upstream changelog](https://github.com/vrana/adminer/blob/v6.1.1/CHANGELOG.md)).
+
+### Adminer 6.1.1
+
+- Fix editing identity (PostgreSQL, Oracle, Firebird), rowversion (MS SQL), key (ClickHouse)
+- Select: Fix modifying rows with a NULL value (uncompiled only, regression from 6.1.0)
+- Edit: Do not round big numbers in json (MySQL) and jsonb (PostgreSQL) when saving the row (regression from 5.4.2)
+- DB overview: Keep the table names on the screen when scrolling the list of tables horizontally
+- Select: Keep the checkboxes on the screen when scrolling horizontally
+- Select: Enable saving the modified values again after an error (regression from 6.0.0)
+- Select: Highlight the searched text
+- Select: Search anywhere by IS NULL and IS NOT NULL without a value
+- Show documentation links as 📖, link it from the heading
+- Menu: Group system databases and schemas
+- Trigger: Name a new trigger with more events by all of them
+- PDO: Preserve the exact value of double (bug #1214)
+- PostgreSQL, MS SQL, Oracle: Do not highlight a valid date or time value as too long
+- PostgreSQL: Alter the trigger function from table structure
+- PostgreSQL: Do not highlight an array value as too long
+- PostgreSQL: Fix renaming a column and making it a foreign key at the same time
+- PostgreSQL: Export and alter the default values of enum and array columns (bug #1342)
+- PostgreSQL: Edit the enum values containing an apostrophe
+- PostgreSQL: Alter table: Offer and quote the user types with uppercase letters
+- SQLite: Disallow ATTACH and VACUUM INTO prefixed by BOM (GHSA-r9r5-j5q8-8c59)
+- SQLite: Deny writing files by an authorizer (PHP 8.0+, PDO PHP 8.5+)
+- MS SQL: Export and alter the precision of datetime2, time and datetimeoffset
+- MS SQL: Keep fractional seconds and the time zone offset when saving a row with the sqlsrv extension
+- MS SQL Dblib: Display uniqueidentifier (bug #1339)
+- MS SQL Dblib: Show the server version
+- MS SQL Dblib: Fix creating generated columns and indexed views
+- MS SQL Dblib: SQL command: Rollback an unfinished transaction
+- Oracle: Treat SYS and SYSTEM as read-only
+- Oracle: Support identity columns
+- Oracle: Alter timestamp and interval columns, display their type without a duplicate precision
+- ClickHouse: Offer the geometry types, Time and Time64, group the types as in the other drivers
+- ClickHouse: Display the number of rows to a read-only user
+- ClickHouse: Shorten the links to rows with a long string or geometry by its MD5 hash
+- ClickHouse: Do not round big integers and decimals, e.g. UInt64 or Decimal128, display empty maps and maps with numeric keys as objects
+- ClickHouse: Save the decimals in Array, Map and Tuple exactly, save a Map with other than String keys
+- ClickHouse: Do not turn \b into a backspace (regression from 6.0.0)
+- Editor: Describe foreign keys by the first string column, not only varchar
+- Editor: Shorten long descriptions of foreign keys
+### Plugins
+- Driver plugins: Driver::disconnect() to forget the logged user
+- Driver plugins: Connect to the privileged ports of the driver's own protocol (ClickHouse, Elasticsearch, IMAP)
+- Driver plugins: Driver::hasEstimatedRows() to recount the rows only after an estimate
+- Driver plugins: Driver::md5() to shorten the links to rows with a long value
+- Driver plugins: Driver::isSystem() to group the system databases and schemas
+- Method namePattern() to customize the names of new indexes, foreign keys, checks and triggers
+- Plugin igdb: Log in by the client secret instead of an access token obtained manually
+- New plugin select-foreign: Display the first string column of the referenced row instead of a foreign key value, same as in Adminer Editor
+- New plugin name-patterns: Name new indexes, foreign keys, checks and triggers by your own convention
+### Changed in the bridge
+
+Nothing. This release moves the `vrana/adminer` pin and nothing else.
+It was cut automatically once the full test matrix and the asset smoke
+test passed against Adminer 6.1.1. Those cover the package's wiring,
+routing and asset serving; they do not exercise Adminer's own UI behind a
+database connection, so read the upstream changelog above for what changed
+inside Adminer itself.
+
+**Full Changelog**: https://github.com/magnusvin/adminer-laravel-bridge/compare/6.1.0.0...6.1.1.0
 
 ## [6.1.0.0](https://github.com/magnusvin/adminer-laravel-bridge/commits/main/compare/6.0.2.0...6.1.0.0) - 2026-09-24
 
