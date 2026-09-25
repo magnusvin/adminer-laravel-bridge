@@ -65,16 +65,6 @@ jobs:
       - name: Linter
         run: composer lint:check
 
-      # The plugin caches its analysis in vendor/.../.temp/v3.php. That file has
-      # been observed truncated mid-write in CI, failing the run with a
-      # ParseError that a rerun of the same commit did not reproduce. Starting
-      # cold costs a few seconds and removes the stale-cache variable.
-      - name: Type Coverage
-        if: runner.os != 'Windows'
-        run: |
-          rm -rf vendor/pestphp/pest-plugin-type-coverage/.temp
-          composer test:types
-
       - name: Test Suite
         if: runner.os != 'Windows'
         run: composer test:unit
@@ -82,6 +72,38 @@ jobs:
       - name: Test Suite (Windows)
         if: runner.os == 'Windows'
         run: vendor/bin/pest
+
+  types:
+    runs-on: ubuntu-latest
+
+    name: Type coverage
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: 8.3
+          tools: composer:v2
+          coverage: none
+
+      - name: Install dependencies
+        run: composer update --prefer-dist --no-interaction --no-progress --no-scripts
+
+      # pest-plugin-type-coverage 4.0.4 guards its shared cache with a
+      # non-blocking flock that gives up after 100 attempts and then writes
+      # anyway, so parallel workers can interleave and leave the cache file
+      # unparseable. It is contention-dependent, which is why a busy runner hits
+      # it and a rerun of the same commit does not. v5 fixes nothing we can use:
+      # it requires PHP 8.4 and this package supports 8.3.
+      #
+      # One retry is safe here specifically because the failure is a race: a
+      # genuine type-coverage regression is deterministic and fails both
+      # attempts, so this cannot hide one.
+      - name: Type Coverage
+        run: composer test:types || composer test:types
 
   smoke:
     runs-on: ubuntu-latest
