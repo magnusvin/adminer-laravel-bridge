@@ -21,6 +21,9 @@ on:
 permissions:
   contents: write
   issues: write
+  # Starting the test matrix is a workflow dispatch, which needs more than
+  # read access to Actions.
+  actions: write
 
 concurrency:
   group: adminer-release
