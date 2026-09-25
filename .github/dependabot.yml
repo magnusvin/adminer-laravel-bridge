@@ -16,3 +16,10 @@ updates:
       interval: "weekly"
     labels:
       - "dependencies"
+    # The Adminer release workflow owns both of these: vrana/adminer is pinned
+    # exactly and vrana/jush is derived from the submodule commit that Adminer
+    # bundles. Letting Dependabot move them independently pushes them out of
+    # step with each other in whichever direction it happens to run.
+    ignore:
+      - dependency-name: "vrana/adminer"
+      - dependency-name: "vrana/jush"

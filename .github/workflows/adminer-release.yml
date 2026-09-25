@@ -109,6 +109,8 @@ jobs:
       - name: Bump the pin
         id: bump
         if: steps.detect.outputs.up_to_date == 'false' && steps.guard.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           latest="${{ steps.detect.outputs.latest }}"
 
@@ -149,6 +151,31 @@ jobs:
 
           # composer.lock is gitignored (this is a library), so there is no lock
           # file to update a single package against - resolve the whole set.
+          # Adminer pins jush as a submodule; match it as closely as a Composer
+          # release allows, or this ships a jush the bundled Adminer never saw.
+          jush="$(gh auth token | php .github/scripts/jush-version.php "${latest}" || true)"
+          if [ -n "${jush}" ]; then
+            echo "Adminer ${latest} bundles jush ${jush}"
+            php -r '
+              $file = "composer.json";
+              $contents = file_get_contents($file);
+              $updated = preg_replace(
+                  "#(\"vrana/jush\": \")[^\"]+(\")#",
+                  "\${1}~" . $argv[1] . "\${2}",
+                  $contents,
+                  1,
+                  $count
+              );
+              if ($count !== 1) {
+                  fwrite(STDERR, "Could not rewrite the vrana/jush constraint\n");
+                  exit(1);
+              }
+              file_put_contents($file, $updated);
+            ' "${jush}"
+          else
+            echo "Could not resolve a jush release for Adminer ${latest}; leaving the constraint alone."
+          fi
+
           composer update --no-interaction --no-scripts
 
           # Adminer ships its own changelog; the release notes quote the
@@ -168,6 +195,8 @@ jobs:
       - name: Push the bump to a branch for the matrix to gate
         id: branch
         if: steps.detect.outputs.up_to_date == 'false' && steps.guard.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           branch="adminer/${{ steps.detect.outputs.latest }}"
 
@@ -188,6 +217,11 @@ jobs:
           git push --force-with-lease origin "${branch}"
           echo "name=${branch}" >> "$GITHUB_OUTPUT"
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+          # GitHub does not raise push events for pushes made with GITHUB_TOKEN
+          # (it is how it stops workflows triggering themselves), so the matrix
+          # has to be started explicitly rather than waited for.
+          gh workflow run tests.yml --ref "${branch}"
 
       - name: Wait for the test matrix on that branch
         id: gate
