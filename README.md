@@ -16,7 +16,7 @@ A Laravel bridge for [Adminer](https://www.adminer.org/), the single-file databa
 
 - PHP 8.3+
 - Laravel 12.x or 13.x
-- [`vrana/adminer`](https://packagist.org/packages/vrana/adminer) 6.1.0 (installed automatically as a dependency, pinned to an exact version — see [Versioning](#versioning))
+- [`vrana/adminer`](https://packagist.org/packages/vrana/adminer) 6.1.1 (installed automatically as a dependency, pinned to an exact version — see [Versioning](#versioning))
 
 ## Installation
 
