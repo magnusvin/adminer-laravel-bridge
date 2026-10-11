@@ -1,8 +1,54 @@
 # Release Notes
 
-## [Unreleased](https://github.com/magnusvin/adminer-laravel-bridge/commits/main/compare/6.1.1.0...HEAD)
+## [Unreleased](https://github.com/magnusvin/adminer-laravel-bridge/commits/main/compare/6.1.2.0...HEAD)
 
 No unreleased changes yet. See [Versioning](README.md#versioning) for how release version numbers are chosen.
+
+## [6.1.2.0](https://github.com/magnusvin/adminer-laravel-bridge/commits/main/compare/6.1.1.0...6.1.2.0) - 2026-10-11
+
+Ships **Adminer 6.1.2** ([upstream changelog](https://github.com/vrana/adminer/blob/v6.1.2/CHANGELOG.md)).
+
+### Adminer 6.1.2
+
+- Select: Quote again the quoted values of IN
+- Select: Accept the unquoted values of IN in parentheses (bug #1350, regression from 6.0.1)
+- Select: Edit the stored value by Ctrl+click on a non-original value (bug #1344)
+- Select: Search by BETWEEN (bug #1346)
+- Select: Report an unknown column in search instead of a fatal error
+- Export: Print the error also in CSV
+- Export: Skip routines with a hidden definition instead of creating them without the body
+- Login: Report invalid credentials for a wrong password required by Adminer\Password (bug #1351)
+- Alter foreign key: Keep the original key if altering it fails (regression from 5.0.0)
+- MySQL, SQLite: Search by & (bug #1346)
+- PostgreSQL: List the triggers of a trigger function instead of calling it
+- PostgreSQL: Alter only the changed parts of a column
+- PostgreSQL, MS SQL: Display, edit and export the schema comment
+- CockroachDB: Keep the original view, type or check if altering it fails
+- MS SQL: Save the comments of new and renamed columns
+- MS SQL: Save the table comment
+- MS SQL: List the tables also if a table has another extended property than the comment
+- MS SQL: Export the comments of tables and columns, the column comments made the export invalid
+- IGDB, SimpleDB: Fix export of nested values
+- Editor: Offer the row with the typed ID first when searching a foreign key, fix the search in MS SQL and Oracle
+### Plugins
+- Method formatSizeValue() to format the sizes of tables, indexes and databases
+- Method Driver::routineTriggers()
+- Method selectColumnInput() to customize choosing a column in select
+- Method selectSearchCondition() to customize the SQL of a search operator
+- Methods commentValue() and commentInput() with type 'SCHEMA'
+- Method sqlUrlLength() to limit the length of URLs with the query from SQL command (bug #1358)
+- New plugin select-expression: Type the columns in select with suggestions, also expressions like a+b
+- New plugin sql-url-length: Limit the length of URLs with the query from SQL command, some servers reject them
+### Changed in the bridge
+
+Nothing. This release moves the `vrana/adminer` pin and nothing else.
+It was cut automatically once the full test matrix and the asset smoke
+test passed against Adminer 6.1.2. Those cover the package's wiring,
+routing and asset serving; they do not exercise Adminer's own UI behind a
+database connection, so read the upstream changelog above for what changed
+inside Adminer itself.
+
+**Full Changelog**: https://github.com/magnusvin/adminer-laravel-bridge/compare/6.1.1.0...6.1.2.0
 
 ## [6.1.1.0](https://github.com/magnusvin/adminer-laravel-bridge/commits/main/compare/6.1.0.0...6.1.1.0) - 2026-09-25
 
