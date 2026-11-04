@@ -1,8 +1,52 @@
 # Release Notes
 
-## [Unreleased](https://github.com/magnusvin/adminer-laravel-bridge/commits/main/compare/6.2.0.0...HEAD)
+## [Unreleased](https://github.com/magnusvin/adminer-laravel-bridge/commits/main/compare/6.3.0.0...HEAD)
 
 No unreleased changes yet. See [Versioning](README.md#versioning) for how release version numbers are chosen.
+
+## [6.3.0.0](https://github.com/magnusvin/adminer-laravel-bridge/commits/main/compare/6.2.0.0...6.3.0.0) - 2026-11-04
+
+Ships **Adminer 6.3.0** ([upstream changelog](https://github.com/vrana/adminer/blob/v6.3.0/CHANGELOG.md)).
+
+### Adminer 6.3.0
+
+- Require PHP 5.4+
+- Search tables, schemas and databases by Ctrl+K
+- Link the donation page by a heart in the top right corner
+- Avoid redundant queries
+- Use HTTP 303 for redirects after POST
+- Don't skip the CSRF token check if login data is posted along (regression from 6.0.1)
+- Edit: Don't replace long JSON values by null without PCRE JIT (bug #1373, regression from 6.1.1)
+- Mac: Use ⌘ instead of Ctrl in keyboard shortcuts and write them so
+- MySQL, MariaDB: Upload files up to max_allowed_packet instead of its half
+- MySQL &lt; 5.7.8, MariaDB &lt; 10.1.2: Unsupport found rows timeout
+- MySQLi: Fix transactions in PHP &lt; 5.5 (regression from 6.1.0)
+- MySQL PDO: Fix select in PHP &lt; 5.5.21 (regression from 6.0.0)
+- PostgreSQL: Restore the schema in menu after changing it in SQL command
+- MS SQL Dblib: Don't stop queries after 30 seconds
+- MS SQL, Oracle: Limit the execution time of counting rows in select
+- Oracle: Create foreign keys in Create table and Alter table
+- Oracle: Fix altering INTEGER columns
+- Oracle: Fix renaming CLOB columns
+- Oracle: Display foreign keys in Database schema
+- Editor: Fix export (bug #1370, regression from 6.0.0)
+- Editor: Fix JavaScript errors in import and export (regression from 5.4.1)
+### Plugins
+- Method donation() to replace or hide the donation link
+- Method executeQuery() to wrap every request sent to the database server (bug #1368)
+- New plugin donation: Replace or hide the donation link in the top right corner
+### Internal
+- Compilation: Use the short array syntax
+### Changed in the bridge
+
+Nothing. This release moves the `vrana/adminer` pin and nothing else.
+It was cut automatically once the full test matrix and the asset smoke
+test passed against Adminer 6.3.0. Those cover the package's wiring,
+routing and asset serving; they do not exercise Adminer's own UI behind a
+database connection, so read the upstream changelog above for what changed
+inside Adminer itself.
+
+**Full Changelog**: https://github.com/magnusvin/adminer-laravel-bridge/compare/6.2.0.0...6.3.0.0
 
 ## [6.2.0.0](https://github.com/magnusvin/adminer-laravel-bridge/commits/main/compare/6.1.2.0...6.2.0.0) - 2026-10-24
 
