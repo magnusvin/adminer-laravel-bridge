@@ -1,8 +1,52 @@
 # Release Notes
 
-## [Unreleased](https://github.com/magnusvin/adminer-laravel-bridge/commits/main/compare/6.3.0.0...HEAD)
+## [Unreleased](https://github.com/magnusvin/adminer-laravel-bridge/commits/main/compare/6.3.1.0...HEAD)
 
 No unreleased changes yet. See [Versioning](README.md#versioning) for how release version numbers are chosen.
+
+## [6.3.1.0](https://github.com/magnusvin/adminer-laravel-bridge/commits/main/compare/6.3.0.0...6.3.1.0) - 2026-11-21
+
+Ships **Adminer 6.3.1** ([upstream changelog](https://github.com/vrana/adminer/blob/v6.3.1/CHANGELOG.md)).
+
+### Adminer 6.3.1
+
+- Search Database schema, Privileges, Process list, Variables and Status by Ctrl+K
+- Ignore search conditions from the URL in searching all tables (regression from 6.3.0)
+- Perform the action posted with an expired session after the login only if sent by same origin
+- Syntax highlighting: Escape quotes in the links, e.g. in a status variable name sent by a malicious server
+- Select: Run the SQL operator without Sec-Fetch-Site (old browsers, HTTP) only after sending the form again
+- Select: Don't warn about a missing field in COUNT(*) (regression from 6.2.0)
+- Select: Print only the digits of the search condition keys from the URL (GHSA-qjv8-pw8g-jw65)
+- Select: Escape the name of a FULLTEXT index in the search form (HTML injection)
+- MySQL, MariaDB: Don't unescape string literals in routine definitions (regression from 5.4.2)
+- MySQL, MariaDB: Don't store the password of a created or altered user in the SQL history (regression from 5.5.0)
+- MySQL, MariaDB: Export the table name in CREATE TABLE as in the other commands with lower_case_table_names=1 (fix #1380)
+- MySQL, MariaDB: Escape the name of a geometry column in the conditions, edit and export (SQL injection)
+- PostgreSQL: Export data of GENERATED ALWAYS identity columns with OVERRIDING SYSTEM VALUE
+- PostgreSQL: Don't crash on NUL in the password or the database name (PHP 8.5.13)
+- SQLite: Check the file extension in file: URIs (GHSA-5xfm-7vgj-3f39)
+- SQLite: Disallow ATTACH and VACUUM INTO preceded by a semicolon without the authorizer (PHP < 8.0, PDO < 8.5)
+- SQLite: Disallow ATTACH and VACUUM INTO in exporting the SQL command result without the authorizer
+- SQLite PDO: Open databases by file: URIs (PHP 8.1+)
+- ClickHouse: Escape backslash in identifiers (SQL injection)
+- MongoDB: Don't update or delete other documents if a value contains AND or OR, refuse a condition which is not understood
+- Editor: Preserve the aspect ratio of shrunk images (regression from 6.0.0)
+### Plugins
+- Call processInput() for <input type="file"> from editInput(), e.g. in AdminerFileUpload (regression from 5.4.2)
+### Internal
+- Use a 128-bit cryptographically secure CSRF token
+- Encrypt the password in the session also after the permanent login
+- ESLint: Pin the npm package versions in package.json
+### Changed in the bridge
+
+Nothing. This release moves the `vrana/adminer` pin and nothing else.
+It was cut automatically once the full test matrix and the asset smoke
+test passed against Adminer 6.3.1. Those cover the package's wiring,
+routing and asset serving; they do not exercise Adminer's own UI behind a
+database connection, so read the upstream changelog above for what changed
+inside Adminer itself.
+
+**Full Changelog**: https://github.com/magnusvin/adminer-laravel-bridge/compare/6.3.0.0...6.3.1.0
 
 ## [6.3.0.0](https://github.com/magnusvin/adminer-laravel-bridge/commits/main/compare/6.2.0.0...6.3.0.0) - 2026-11-04
 
